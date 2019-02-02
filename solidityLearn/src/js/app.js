@@ -20,17 +20,6 @@ App = {
     return App.initContract();
   },
 
-  initContract: function() {
-    $.getJSON("Election.json", function(election) {
-      // Instantiate a new truffle contract from the artifact
-      App.contracts.Election = TruffleContract(election);
-      // Connect provider to interact with contract
-      App.contracts.Election.setProvider(App.web3Provider);
-
-      return App.render();
-    });
-  },
-
   render: function() {
     var electionInstance;
     var loader = $("#loader");
