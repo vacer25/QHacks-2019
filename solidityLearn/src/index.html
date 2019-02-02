@@ -38,6 +38,17 @@
       </div>
     </div>
 
+    <form onSubmit="App.castVote(); return false;">
+      <div class="form-group">
+        <label for="candidatesSelect">Select Candidate</label>
+        <select class="form-control" id="candidatesSelect">
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary">Vote</button>
+      <hr />
+    </form>
+        
+
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->

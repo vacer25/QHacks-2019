@@ -12,6 +12,8 @@ contract Election {
 
     // Read/write candidate
     mapping(uint => Candidate) public candidates;
+    mapping(address => bool) public voters;
+    // Okay I get this mapping now!  This is cool!
     // Id based look up for each candidate?
     // This writes data to the blockchain any time we assign a new key-value pair to it
 
@@ -24,6 +26,22 @@ contract Election {
     }
     // This is in memory because it's just a temporary thing.  We would say storage if we wanted it written to the blockchain.
     // For this though, just a temporary parameter so we should be good 
+
+    function vote (uint _candidateId) public {
+        require(!voters[msg.sender]);
+
+        require(_candidateId > 0 && _candidateId <= candidatesCount);
+
+        voters[msg.sender] = true;
+
+        candidates[_candidateId].voteCount ++;
+
+        emit votedEvent(_candidateId);
+    }
+
+    event votedEvent (
+        uint indexed _candidateId
+    );
 
     //Constructor
     constructor() public {
@@ -44,3 +62,4 @@ contract Election {
 // Then index it's stuff with [0] or ['id]
 // And can do stuff like .toNumber() to get better data
 // Explanation at 1:09:00 with connecting metamask and stuff
+// npm run dev
