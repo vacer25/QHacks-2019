@@ -11,6 +11,6 @@ http.createServer(function (request, response) {
     response.end('Hello Qhacks 2019\n');
 }).listen(8081);
 
-console.log('Server unning at localhost:8081');
+console.log('Server running at localhost:8081');
 
 // WOOT!
