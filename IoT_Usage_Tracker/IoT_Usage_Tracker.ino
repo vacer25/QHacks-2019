@@ -1,7 +1,12 @@
 // -------------------- LIB'S --------------------
 
+#include <Watchdog.h>
 #include <Wire.h>
 #include "IMU.h"
+
+// -------------------- WATCHDOG --------------------
+
+Watchdog watchdog;
 
 // -------------------- CONSTANTS --------------------
 
@@ -21,22 +26,35 @@ int numberOfDrops = 0;
 
 void setup() {
 
+  watchdog.reset();
+
   // -------------------- SERIAL --------------------
 
   Serial.begin(115200);
   Serial.println("Starting...");
+
+  // -------------------- WATCHDOG TIMER --------------------
+
+  watchdog.enable(Watchdog::TIMEOUT_2S);
 
   // -------------------- IMU --------------------
 
   setupIMU();
   Serial.println("Started!");
 
+  watchdog.reset();
+  watchdog.enable(Watchdog::TIMEOUT_250MS);
+
 }
 
 
 void loop() {
 
+  // -------------------- WATCHDOG TIMER --------------------
+
   unsigned long currentMillis = millis();
+
+  watchdog.reset();
 
   // -------------------- UPDATE IMU --------------------
 
@@ -45,42 +63,37 @@ void loop() {
 
   // -------------------- OUTPUT DATA --------------------
 
-  //if (currentMillis - lastOutputTime > OUTPUT_INTERVAL) {
-    //lastOutputTime = currentMillis;
+  if (currentMillis - lastOutputTime > OUTPUT_INTERVAL) {
+    lastOutputTime = currentMillis;
 
-    static float maxXYZ = 0;
-    if(xAccel > maxXYZ) {
-      maxXYZ = xAccel;
+    static float maxMagnitude = 0;
+    float currentMagnitude = getAccelerationSquaredMagnitude();
+    if (currentMagnitude > maxMagnitude) {
+      maxMagnitude = currentMagnitude;
     }
-    if(yAccel > maxXYZ) {
-      maxXYZ = yAccel;
-    }
-    if(zAccel > maxXYZ) {
-      maxXYZ = zAccel;
-    }    
 
     /*
-    // For serial monitor
-    Serial.print(F("X: "));
-    Serial.print(xAccel);
-    Serial.print(F("\tY: "));
-    Serial.print(yAccel);
-    Serial.print(F("\tZ: "));
-    Serial.print(zAccel);
-    Serial.print(F("\tM: "));
-    Serial.print(maxXYZ);
-    Serial.println();
+      // For serial monitor
+      Serial.print(F("X: "));
+      Serial.print(xAccel);
+      Serial.print(F("\tY: "));
+      Serial.print(yAccel);
+      Serial.print(F("\tZ: "));
+      Serial.print(zAccel);
+      Serial.print(F("\tM: "));
+      Serial.print(maxXYZ);
+      Serial.println();
     */
 
     // For serial plotter
     Serial.print("10,-10,");
     Serial.print(DROP_ACCEL_MAGNITUDE_THRESHOLD);
     Serial.print(",");
-    Serial.print(getAccelerationSquaredMagnitude());
+    Serial.print(currentMagnitude);
     Serial.print(F(", "));
     Serial.println(numberOfDrops);
 
-  //}
+  }
 
 }
 

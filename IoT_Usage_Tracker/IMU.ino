@@ -89,20 +89,20 @@ void setupIMU() {
   //
 
   error = MPU6050_read (MPU6050_WHO_AM_I, &c, 1);
-  //Serial.print(F("WHO_AM_I : "));
-  //Serial.print(c,HEX);
-  //Serial.print(F(", error = "));
-  //Serial.println(error,DEC);
+  Serial.print(F("WHO_AM_I : "));
+  Serial.print(c,HEX);
+  Serial.print(F(", error = "));
+  Serial.println(error,DEC);
 
   // According to the datasheet, the 'sleep' bit
   // should read a '1'.
   // That bit has to be cleared, since the sensor
   // is in sleep mode at power-up.
   error = MPU6050_read (MPU6050_PWR_MGMT_1, &c, 1);
-  //Serial.print(F("PWR_MGMT_1 : "));
-  //Serial.print(c,HEX);
-  //Serial.print(F(", error = "));
-  //Serial.println(error,DEC);
+  Serial.print(F("PWR_MGMT_1 : "));
+  Serial.print(c,HEX);
+  Serial.print(F(", error = "));
+  Serial.println(error,DEC);
 
 
   // Clear the 'sleep' bit to start the sensor.
