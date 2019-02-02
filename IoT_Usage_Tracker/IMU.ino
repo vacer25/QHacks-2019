@@ -1,5 +1,5 @@
-float getAccelerationSquaredMagnitude() {
-  return pow(xAccel, 2) + pow(yAccel, 2) + pow(zAccel, 2);
+float getAccelerationMagnitude() {
+  return sqrt(pow(xAccel, 2) + pow(yAccel, 2) + pow(zAccel, 2));
 }
 
 float checkForDrops() {
@@ -7,23 +7,31 @@ float checkForDrops() {
   unsigned long currentMillis = millis();
   static unsigned long timeOfLastDrop = 1;
 
-  float currentAccelerationMagnitudeSquared = getAccelerationSquaredMagnitude();
-  static float previousAccelerationMagnitudeSquared = 0;
+  float currentAccelerationMagnitude = getAccelerationMagnitude();
+  static float previousAccelerationMagnitude = 0;
 
   // If the acceleration is over the threshold and was not last time
-  if (currentAccelerationMagnitudeSquared > DROP_ACCEL_MAGNITUDE_THRESHOLD && previousAccelerationMagnitudeSquared < DROP_ACCEL_MAGNITUDE_THRESHOLD) {
+  if (currentAccelerationMagnitude > DROP_ACCEL_MAGNITUDE_THRESHOLD && previousAccelerationMagnitude < DROP_ACCEL_MAGNITUDE_THRESHOLD) {
 
-    // If enough time since the last drop occured
-    if (currentMillis - timeOfLastDrop > (DROP_TIME_INTERVAL_THRESHOLD * 1000)) {
-      // A drop occured
-      numberOfDrops++;
-      timeOfLastDrop = currentMillis;
+    // If the average magnitude is below a threshold
+    if (averageMagnitude < DROP_ACCEL_AVG_MAGNITUDE_THRESHOLD) {
+
+      // If enough time since the last drop occured
+      if (currentMillis - timeOfLastDrop > (DROP_TIME_INTERVAL_THRESHOLD * 1000)) {
+
+        // A drop occured
+        numberOfDrops++;
+        timeOfLastDrop = currentMillis;
+        forceUpdateLCD = true;
+
+      }
+
     }
-    
+
   }
 
   // Save previous acceleration magnitude
-  previousAccelerationMagnitudeSquared = currentAccelerationMagnitudeSquared;
+  previousAccelerationMagnitude = currentAccelerationMagnitude;
 
 }
 
@@ -65,11 +73,38 @@ void readIMUData() {
   SWAP (accel_t_gyro.reg.y_gyro_h, accel_t_gyro.reg.y_gyro_l);
   SWAP (accel_t_gyro.reg.z_gyro_h, accel_t_gyro.reg.z_gyro_l);
 
-  // Get data
-
+  // Process data
   xAccel = accel_t_gyro.value.x_accel != 32767 ? (float)accel_t_gyro.value.x_accel / MAX_ACCEL_VALUE : xAccel;
   yAccel = accel_t_gyro.value.y_accel != 32767 ? (float)accel_t_gyro.value.y_accel / MAX_ACCEL_VALUE : yAccel;
   zAccel = accel_t_gyro.value.z_accel != 32767 ? (float)accel_t_gyro.value.z_accel / MAX_ACCEL_VALUE : zAccel;
+
+  // Get current magnitude
+  currentMagnitude = getAccelerationMagnitude();
+
+  // Calculate average magnitude
+  accelerationReadingsSumValue -= accelerationReadings[accelerationReadingIndex];
+  accelerationReadings[accelerationReadingIndex] = currentMagnitude;
+  accelerationReadingsTotalValue += currentMagnitude;
+  accelerationReadingsSumValue += accelerationReadings[accelerationReadingIndex];
+  accelerationReadingIndex++;
+  accelerationTotalReadingIndex++;
+  if (accelerationReadingIndex >= ACCELERATION_MAGNITUDE_SMOOTHING) {
+    accelerationReadingIndex = 0;
+  }
+  if (isFirstAccelerationReading) {
+    isFirstAccelerationReading = false;
+    averageMagnitude = currentMagnitude;
+  }
+  else {
+    averageMagnitude = accelerationReadingsSumValue / ACCELERATION_MAGNITUDE_SMOOTHING;
+  }
+  totalAverageMagnitude = accelerationReadingsTotalValue / accelerationTotalReadingIndex;
+
+  // Record max magnitude
+  if (currentMagnitude > maxMagnitude) {
+    maxMagnitude = currentMagnitude;
+  }
+
 
 }
 
@@ -90,9 +125,9 @@ void setupIMU() {
 
   error = MPU6050_read (MPU6050_WHO_AM_I, &c, 1);
   Serial.print(F("WHO_AM_I : "));
-  Serial.print(c,HEX);
+  Serial.print(c, HEX);
   Serial.print(F(", error = "));
-  Serial.println(error,DEC);
+  Serial.println(error, DEC);
 
   // According to the datasheet, the 'sleep' bit
   // should read a '1'.
@@ -100,9 +135,9 @@ void setupIMU() {
   // is in sleep mode at power-up.
   error = MPU6050_read (MPU6050_PWR_MGMT_1, &c, 1);
   Serial.print(F("PWR_MGMT_1 : "));
-  Serial.print(c,HEX);
+  Serial.print(c, HEX);
   Serial.print(F(", error = "));
-  Serial.println(error,DEC);
+  Serial.println(error, DEC);
 
 
   // Clear the 'sleep' bit to start the sensor.

@@ -622,3 +622,10 @@ typedef union accel_t_gyro_union
 };
 
 accel_t_gyro_union accel_t_gyro;
+
+boolean isFirstAccelerationReading = true;
+float accelerationReadings[ACCELERATION_MAGNITUDE_SMOOTHING];
+int accelerationReadingIndex = 0;
+long accelerationTotalReadingIndex = 0;
+float accelerationReadingsSumValue = 0;
+float accelerationReadingsTotalValue = 0;
