@@ -55,6 +55,10 @@ void setup() {
   doorServo.attach(SERVO_PIN);
   doorServo.write(0);
 
+  // -------------------- BUTTON --------------------
+
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+
 }
 
 /**
@@ -75,13 +79,13 @@ void loop() {
     boolean bad = false;
     long startTime = millis();
     doorServo.write(160);
-    if (digitalRead(BUTTON_PIN)){
-      oldTime = millis();
-      while (millis() - oldtime < 2000){
-        if (digitalRead(BUTTON_PIN)){
+    if (!digitalRead(BUTTON_PIN)){
+      long oldTime = millis();
+      while (millis() - oldTime < 2000){
+        if (!digitalRead(BUTTON_PIN)){
           oldTime = millis();
         }
-        if (millis - startTime > 10000){
+        if (millis() - startTime > 10000){
           doorServo.write(0);
           bad = true;
           break;
@@ -96,8 +100,8 @@ void loop() {
       doorServo.write(0);
     }else{
       bad = true;
-      while (startTime - millis() < 10000){
-        if (digitalRead(BUTTON_PIN)){
+      while (millis() - startTime < 10000){
+        if (!digitalRead(BUTTON_PIN)){
           bad = false;
           delay(5000);
           doorServo.write(0);
@@ -107,9 +111,11 @@ void loop() {
       }
       doorServo.write(0);
       if(!bad){
-        Serial.print(F("in,"));
-        dump_byte_array(mfrc522[TAG_READER].uid.uidByte, mfrc522[TAG_READER].uid.size);
-        Serial.println();
+        if(!digitalRead(BUTTON_PIN)){
+          Serial.print(F("in,"));
+          dump_byte_array(mfrc522[TAG_READER].uid.uidByte, mfrc522[TAG_READER].uid.size);
+          Serial.println();
+        }
       }
     }
 
