@@ -68,7 +68,7 @@ App = {
             "<tr><th>" + name + 
             "</th><td>" + cost/(1e18) + 
             "</td><td>" + hasOut + 
-            "</td><td>" + new Date(checkTime*1000) + "</td></tr>";
+            "</td><td>" + new Date(checkTime*1000).toLocaleString() + "</td></tr>";
           assetsAvailable.append(assetTemplate);
   
           // Render asset options

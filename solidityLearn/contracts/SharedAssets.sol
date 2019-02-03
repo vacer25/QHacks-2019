@@ -46,7 +46,7 @@ contract SharedAssets {
         require(_asset > 0 && _asset <= assetCount);
 
         // Ensure that the asset is checked out by the person checking it in
-        //require(assets[_asset].hasOut == msg.sender);
+        require(assets[_asset].hasOut != address(0));
 
         // ensure time makes sense
         require(assets[_asset].checkTime < _time && _time < block.timestamp);
@@ -61,6 +61,14 @@ contract SharedAssets {
         emit changedEvent();
     }
 
+    function getBalance() public view returns (uint) {
+        return address(this).balance;
+    }
+
+    function sink() payable public{
+        //Take the money
+    }
+
     function() external payable {
         //Falback
     }
@@ -72,5 +80,3 @@ contract SharedAssets {
     }
 
 }
-
-
