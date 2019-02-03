@@ -1,4 +1,8 @@
-# QHacks-2019, troygiorshev, vacer25
+# Diamond
+**Secure and Transparent Asset Management System, Distributed Across the Ethereum Network**
+
+QHacks-2019, troygiorshev, vacer25
+
 ## Inspiration
 
 * **An Ethereum Smart Contract, and a Human Social Contract, _together_.**
