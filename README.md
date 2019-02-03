@@ -1,5 +1,7 @@
 # QHacks-2019
 
-Troy Giorshev
+Insert Description Here
 
+Troy Giorshev
+vacer25
 
