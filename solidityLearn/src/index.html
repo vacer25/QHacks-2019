@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Election Results</title>
+    <title>Asset Registry</title>
 
     <!-- Bootstrap -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
@@ -13,7 +13,7 @@
     <div class="container" style="width: 650px;">
       <div class="row">
         <div class="col-lg-12">
-          <h1 class="text-center">Election Results</h1>
+          <h1 class="text-center">Asset Registry</h1>
           <hr/>
           <br/>
           <div id="loader">
@@ -23,12 +23,13 @@
             <table class="table">
               <thead>
                 <tr>
-                  <th scope="col">#</th>
                   <th scope="col">Name</th>
-                  <th scope="col">Votes</th>
+                  <th scope="col">Cost</th>
+                  <th scope="col">Taken Out By</th>
+                  <th scope="col">Since</th>
                 </tr>
               </thead>
-              <tbody id="candidatesResults">
+              <tbody id="assetsResults">
               </tbody>
             </table>
             <hr/>
@@ -38,16 +39,16 @@
       </div>
     </div>
 
-    <form onSubmit="App.castVote(); return false;">
+    <form onsubmit="return false;">
       <div class="form-group">
-        <label for="candidatesSelect">Select Candidate</label>
-        <select class="form-control" id="candidatesSelect">
+        <label for="assetsAvailable">Select Asset</label>
+        <select class="form-control" id="assetSelect">
         </select>
       </div>
-      <button type="submit" class="btn btn-primary">Vote</button>
+      <button type="submit" onclick="App.checkOut();" class="btn btn-primary">Check Out</button>
+      <button type="submit" onclick="App.checkIn();" class="btn btn-primary">Check In</button>
       <hr />
     </form>
-        
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
