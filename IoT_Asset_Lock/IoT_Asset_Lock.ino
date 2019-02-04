@@ -19,8 +19,7 @@
 byte ssPins[] = {SS_1_PIN, SS_2_PIN};
 MFRC522 mfrc522[2];   // Create MFRC522 instance.
 
-byte lastTagUID[10];
-byte lastTagNumerOfBytes;
+int numberOfDropsRead = 0;
 
 // -------------------- BUTTON --------------------
 
@@ -93,7 +92,7 @@ void loop() {
     if (mfrc522[TAG_READER].PICC_IsNewCardPresent() && mfrc522[TAG_READER].PICC_ReadCardSerial()) {
 
       // Determine if asset is being put in or taken out
-      if (getCardStatus(ASSET_READER)) {
+      if (!digitalRead(BUTTON_PIN) /*getCardStatus(ASSET_READER, true)*/) {
         assetIsBeingTakenOut = true;
         assetIsIn = true;
       } else {
@@ -125,13 +124,15 @@ void loop() {
     // If enough time has passed since the asset was taken out, close the door
     if (doorIsOpen && !assetIsIn && currentMillis - doorOpenTime > CLOSE_DOOR_AFTER_ASSET_TAKEN_OUT_TIME) {
       closeDoor();
-      //Serial.println("Closed (1)");
+      Serial.println("Closed (1)");
 
       // Determine if the asset was actually taken out
-      if (!getCardStatus(ASSET_READER)) {
+      if (digitalRead(BUTTON_PIN)/*!getCardStatus(ASSET_READER, false)*/) {
         // Print info to PC
         Serial.print("out,");
         dump_byte_array(mfrc522[TAG_READER].uid.uidByte, mfrc522[TAG_READER].uid.size);
+        //Serial.print(",");
+        //Serial.print(numberOfDropsRead);
         Serial.println();
       }
 
@@ -140,7 +141,7 @@ void loop() {
     // If the door has been open for too long and the asset not taken out, close the door
     if (doorIsOpen && assetIsIn && currentMillis - assetTakenOutTime > CLOSE_DOOR_IF_ASSET_NOT_TAKEN_OUT_TIME) {
       closeDoor();
-      //Serial.println("Closed (2)");
+      Serial.println("Closed (2)");
     }
 
   } else {
@@ -154,13 +155,20 @@ void loop() {
     // If enough time has passed since the asset was put in, close the door
     if (doorIsOpen && assetIsIn && currentMillis - assetPutInTime > CLOSE_DOOR_AFTER_ASSET_PUT_IN_TIME) {
       closeDoor();
-      //Serial.println("Closed (3)");
+      Serial.println("Closed (3)");
 
       // Determine if the asset was actually put in
-      if (getCardStatus(ASSET_READER)) {
+      if (!digitalRead(BUTTON_PIN)/*getCardStatus(ASSET_READER, false)*/) {
+
+        numberOfDropsRead = getNumberOfDrops();
+        //Serial.print("Drops: ");
+        //Serial.println(numberOfDropsRead);
+
         // Print info to PC
         Serial.print("in,");
         dump_byte_array(mfrc522[TAG_READER].uid.uidByte, mfrc522[TAG_READER].uid.size);
+        Serial.print(",");
+        Serial.print(numberOfDropsRead);
         Serial.println();
       }
 
@@ -169,7 +177,7 @@ void loop() {
     // If the door has been open for too long and the asset not put in, close the door
     if (doorIsOpen && !assetIsIn && currentMillis - doorOpenTime > CLOSE_DOOR_IF_ASSET_NOT_PUT_IN_TIME) {
       closeDoor();
-      //Serial.println("Closed (4)");
+      Serial.println("Closed (4)");
     }
 
   }
@@ -189,10 +197,68 @@ void openDoor(unsigned long currentMillis) {
   assetTakenOutTime = currentMillis;
 }
 
-int getCardStatus(int readerIndex) {
+int getNumberOfDrops() {
+
+  // Prepare key - all keys are set to FFFFFFFFFFFFh at chip delivery from the factory.
+  MFRC522::MIFARE_Key key;
+  for (byte i = 0; i < 6; i++) key.keyByte[i] = 0xFF;
+
+  byte buffer[18];
+  for (byte i = 0; i < 18; i++) buffer[i] = 0;
+  byte block = 9;
+  byte bufferLen = 18;
+  MFRC522::StatusCode status;
+
+  ///*
+  //Serial.println(F("Getting card..."));
+
+  unsigned long startTime = millis();
+
+  while (1) {
+    if(millis() - startTime > 1000) {
+      return -1;
+    }
+    if (mfrc522[ASSET_READER].PICC_IsNewCardPresent() && mfrc522[ASSET_READER].PICC_ReadCardSerial()) {
+      break;
+    }
+  }
+
+  //byte bufferATQA[2];
+  //byte bufferSize = sizeof(bufferATQA);
+  //mfrc522[ASSET_READER].PICC_WakeupA(bufferATQA, bufferSize);
+  //*/
+
+  //Serial.println(F("Authenticating using key A..."));
+  status = mfrc522[ASSET_READER].PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, block, &key, &(mfrc522[ASSET_READER].uid));
+  if (status != MFRC522::STATUS_OK) {
+    //Serial.print(F("PCD_Authenticate() failed: "));
+    //Serial.println(mfrc522[ASSET_READER].GetStatusCodeName(status));
+    return;
+  }
+  //else Serial.println(F("PCD_Authenticate() success: "));
+
+  // Write block
+  status = mfrc522[ASSET_READER].MIFARE_Read(block, buffer, &bufferLen);
+  if (status != MFRC522::STATUS_OK) {
+    //Serial.print(F("MIFARE_Read() failed: "));
+    //Serial.println(mfrc522[ASSET_READER].GetStatusCodeName(status));
+    return;
+  }
+  //else Serial.println(F("MIFARE_Read() success: "));
+
+  return buffer[0];
+
+}
+
+int getCardStatus(int readerIndex, boolean getDrops) {
 
   for (int i = 0; i < NUMBER_OF_CARD_PRESENT_CHECKS; i++) {
     if (mfrc522[readerIndex].PICC_IsNewCardPresent()) {
+
+      //if (getDrops) {
+      //  numberOfDropsRead = getNumberOfDrops();
+      //}
+
       return true;
     }
   }

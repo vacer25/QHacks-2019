@@ -3,6 +3,8 @@
 #include <LiquidCrystal.h>
 #include <Watchdog.h>
 #include <Wire.h>
+#include <SPI.h>
+#include <MFRC522.h>
 
 // -------------------- WATCHDOG --------------------
 
@@ -39,6 +41,17 @@ boolean forceUpdateLCD = false;
 LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 // This is for the DFRobot LCD Keypad Sheild v1.1
 
+// -------------------- RFID --------------------
+
+#define RST_PIN         2
+#define SS_PIN          3
+
+MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance
+MFRC522::MIFARE_Key key;
+
+boolean foundCard = false;
+boolean foundCardSerial = false;
+
 // -------------------- SETUP --------------------
 
 void setup() {
@@ -57,9 +70,23 @@ void setup() {
   setupIMU();
   Serial.println("Started!");
 
+  // -------------------- WATCHDOG FOR MAIN PROGRAM --------------------
+
+  watchdog.enable(Watchdog::TIMEOUT_4S);
+
   // -------------------- LCD --------------------
 
   setupLCD();
+
+  // -------------------- RFID --------------------
+
+  SPI.begin();      // Init SPI bus
+  mfrc522.PCD_Init();        // Init MFRC522 card
+  mfrc522.PCD_DumpVersionToSerial();  // Show details of PCD - MFRC522 Card Reader details
+
+  // Prepare key - all keys are set to FFFFFFFFFFFFh at chip delivery from the factory.
+  for (byte i = 0; i < 6; i++) key.keyByte[i] = 0xFF;
+
 
 }
 
@@ -72,10 +99,27 @@ void loop() {
 
   watchdog.reset();
 
-  // -------------------- UPDATE IMU --------------------
+  /*
+    // Look for new cards
+    if (!foundCard && !mfrc522.PICC_IsNewCardPresent()) {
+    Serial.println(F("No new cards (loop)"));
+    foundCard = true;
+    return;
+    }
+
+    // Select one of the cards
+    if (!foundCardSerial && !mfrc522.PICC_ReadCardSerial()) {
+    Serial.println(F("No serial cards (loop)"));
+    foundCardSerial = true;
+    return;
+    }
+  */
+
+  // -------------------- UPDATE --------------------
 
   readIMUData();
   checkForDrops();
+  checkToLogDrop();
 
   // -------------------- OUTPUT DATA --------------------
 
